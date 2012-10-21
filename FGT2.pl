@@ -3,6 +3,7 @@
 #edited on spaceship 8/7/2012
 #Edited in Ubuntu 10/19/2012!
 #Komodo 2
+#Edited on Rover 10/21/2012
 
 #Based on Federico Abascal's "mitobank.pl" (http://darwin.uvigo.es/)
 #Copyright (C) 2012 Evan McCartney-Melstad, based on Federico Abascal's
