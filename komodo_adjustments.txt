@@ -10,3 +10,5 @@ In the toolbox (right panel):
         repo to be first (then you can erase it)
 
 Install Evan_Komodo color scheme (just drag it into Komodo) from Dropbox
+
+
