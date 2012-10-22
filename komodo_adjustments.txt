@@ -1,0 +1,12 @@
+Adjustments to Komodo
+
+Install the git tools from https://github.com/jimdoescode/Komodo-Edit-Source-Control-Tools
+In the toolbox (right panel):
+    right click on the Git tools
+    select properties
+    change %p to %D in the "start in" category
+        this changes them to run in the directory of the currently open file,
+        so you need to create a dummy file in the place where you want your
+        repo to be first (then you can erase it)
+
+Install Evan_Komodo color scheme (just drag it into Komodo) from Dropbox
