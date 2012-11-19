@@ -1,3 +1,6 @@
 #Komodo Edit
 .komodotools
 *.komodoproject
+
+#OS files
+.DS_Store
