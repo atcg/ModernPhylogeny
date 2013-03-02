@@ -1,12 +1,7 @@
 #!/usr/bin/perl
 
-#edited on spaceship 8/7/2012
-#Edited in Ubuntu 10/19/2012!
-#Komodo 2
-#Edited on Rover 10/21/2012
 
-#Based on Federico Abascal's "mitobank.pl" (http://darwin.uvigo.es/)
-#Copyright (C) 2012 Evan McCartney-Melstad, based on Federico Abascal's
+#Evan McCartney-Melstad (2012), based on Federico Abascal's
 #mitobank.pl (http://darwin.uvigo.es/)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -215,7 +210,7 @@ while(defined ($seq = $seqio->next_seq )) {
 				elsif($val eq "tRNA-Glx") 
 				{	$val = "tRNA-Glu";		}
 				#rules end.
-				print "$val ";
+#				print "$val ";
 				$genes{$val}++;
 				open(O, ">>FASTA_Files/nuc_pre-alignment/$val.fas");  ###create FASTA file for RNAs
 					print O ">", $name, '_*_', $taxid, "\n";
@@ -224,7 +219,7 @@ while(defined ($seq = $seqio->next_seq )) {
 				close(O);
 		}
 	}    
-	print "\n";
+#	print "\n";
 }
 print "\n\nThere are: $count mitochondrial genomes for this taxonomy criterion\n";
 
@@ -246,23 +241,27 @@ my @fasta_files_pre_alignment = ("ATP6.fas","ATP8.fas","COX1.fas","COX2.fas","CO
 my @RNA_fastas = ("12SrRNA.fas","16SrRNA.fas","tRNA-Ala.fas","tRNA-Arg.fas","tRNA-Asn.fas","tRNA-Asp.fas","tRNA-Cys.fas","tRNA-Gln.fas","tRNA-Glu.fas","tRNA-Gly.fas","tRNA-His.fas","tRNA-Ile.fas","tRNA-Leu.fas","tRNA-Lys.fas","tRNA-Met.fas","tRNA-Phe.fas","tRNA-Pro.fas","tRNA-Ser.fas","tRNA-Thr.fas","tRNA-Trp.fas","tRNA-Tyr.fas","tRNA-Val.fas");
 my @all_fastas = ("ATP6.fas","ATP8.fas","COX1.fas","COX2.fas","COX3.fas","CYTB.fas","ND1.fas","ND2.fas","ND3.fas","ND4.fas","ND4L.fas","ND5.fas","ND6.fas","12SrRNA.fas","16SrRNA.fas","tRNA-Ala.fas","tRNA-Arg.fas","tRNA-Asn.fas","tRNA-Asp.fas","tRNA-Cys.fas","tRNA-Gln.fas","tRNA-Glu.fas","tRNA-Gly.fas","tRNA-His.fas","tRNA-Ile.fas","tRNA-Leu.fas","tRNA-Lys.fas","tRNA-Met.fas","tRNA-Phe.fas","tRNA-Pro.fas","tRNA-Ser.fas","tRNA-Thr.fas","tRNA-Trp.fas","tRNA-Tyr.fas","tRNA-Val.fas");
 
-##GET RID OF DUPLICATE TAXA
-for my $file (@all_fastas) {
-	#Put all lines of file into an array--each line becomes an element. Array[0] is the first line of the file, etc...
-	tie my @tied_array, 'Tie::File', "FASTA_Files/nuc_pre-alignment/$file", recsep => "\r\n" or die "Rats! Couldn't get the lines of the file into an array--is the file name correct?";
+######GET RID OF DUPLICATE TAXA
+#New method using a hash
 
-	#Go through each array element (each line of the file) to check if the array element contains >_
-	#If it does, then get the index of that array element and splice it and the following element out of the array
-	#the "following element" mentioned above is the corresponding DNA sequence
-	for my $line(@tied_array) {
-		my $index = first {$tied_array[$_] =~ m/>_/ } 0 .. $#tied_array;
-		if ( length $index ){
-		splice(@tied_array,$index,2);
-		reset ('$index');
-		}
-			}
-	untie @tied_array;
-	}
+
+
+####for my $file (@all_fastas) {
+####	#Put all lines of file into an array--each line becomes an element. Array[0] is the first line of the file, etc...
+####	tie my @tied_array, 'Tie::File', "FASTA_Files/nuc_pre-alignment/$file", recsep => "\r\n" or die "Rats! Couldn't get the lines of the file into an array--is the file name correct?";
+####
+####	#Go through each array element (each line of the file) to check if the array element contains >_
+####	#If it does, then get the index of that array element and splice it and the following element out of the array
+####	#the "following element" mentioned above is the corresponding DNA sequence
+####	for my $line(@tied_array) {
+####		my $index = first {$tied_array[$_] =~ m/>_/ } 0 .. $#tied_array;
+####		if ( length $index ){
+####		splice(@tied_array,$index,2);
+####		reset ('$index');
+####		}
+####			}
+####	untie @tied_array;
+####	}
 	
 ######    #need to fix gene order, number_of_results_per_gene, species_names_vs_ncbi_taxID
 
@@ -280,31 +279,31 @@ for my $file ( @fasta_files_pre_alignment ) {  ##Loop through all files in pre-a
 		}
 }
 
-#MULTIPLE ALIGNMENT
-#Muscle is in C:\Users\Evan\Desktop\My Dropbox\Columbia\Fish Genome Tool\perl scripts\FGT\subs
-#Must ensure Muscle is in PATH for muscle to run
-#output to CLUSTAL format for next step
-
-#Align protein-coding amino acids
-for my $file ( @fasta_files_pre_alignment ) {
-	system("subs/muscle.exe", "-in", "FASTA_Files/prot_pre-alignment/aa_$file", "-out", "FASTA_Files/prot_post-alignment/aa_aligned_$file");
-	}
-
-#Align RNA nucleotides
-for my $file ( @RNA_fastas ) {
-	system("subs/muscle.exe", "-in", "FASTA_Files/nuc_pre-alignment/$file", "-out", "FASTA_Files/nuc_post-alignment/aligned_$file");
-	}
-	
-#REVERSE TRANSLATE BACK TO ALIGNED DNA SEQUENCES
-#use pal2nal.pl, by Mikita Suyama, David Torrents, and Peer Bork (2006). "PAL2NAL: robust conversion of protein sequence alignments into the corresponding codon alignments." Nucleic Acids Res. 34, W609-W612.
-for my $file ( @fasta_files_pre_alignment ) {
-	open(POSTALIGN, ">FASTA_Files/nuc_post-alignment/aligned_$file") || die "Can't create nucleotide post alignment file";
-	close POSTALIGN;
-	system("perl subs/pal2nal.pl FASTA_Files/prot_post-alignment/aa_aligned_$file FASTA_Files/nuc_pre-alignment/$file -output fasta -codontable 2 > FASTA_Files/nuc_post-alignment/aligned_$file");
-	}
-
-#close genomes.genbank filehandle
-$seqout->close();
+###MULTIPLE ALIGNMENT
+###Muscle is in C:\Users\Evan\Desktop\My Dropbox\Columbia\Fish Genome Tool\perl scripts\FGT\subs
+###Must ensure Muscle is in PATH for muscle to run
+###output to CLUSTAL format for next step
+##
+###Align protein-coding amino acids
+##for my $file ( @fasta_files_pre_alignment ) {
+##	system("subs/muscle.exe", "-in", "FASTA_Files/prot_pre-alignment/aa_$file", "-out", "FASTA_Files/prot_post-alignment/aa_aligned_$file");
+##	}
+##
+###Align RNA nucleotides
+##for my $file ( @RNA_fastas ) {
+##	system("subs/muscle.exe", "-in", "FASTA_Files/nuc_pre-alignment/$file", "-out", "FASTA_Files/nuc_post-alignment/aligned_$file");
+##	}
+##	
+###REVERSE TRANSLATE BACK TO ALIGNED DNA SEQUENCES
+###use pal2nal.pl, by Mikita Suyama, David Torrents, and Peer Bork (2006). "PAL2NAL: robust conversion of protein sequence alignments into the corresponding codon alignments." Nucleic Acids Res. 34, W609-W612.
+##for my $file ( @fasta_files_pre_alignment ) {
+##	open(POSTALIGN, ">FASTA_Files/nuc_post-alignment/aligned_$file") || die "Can't create nucleotide post alignment file";
+##	close POSTALIGN;
+##	system("perl subs/pal2nal.pl FASTA_Files/prot_post-alignment/aa_aligned_$file FASTA_Files/nuc_pre-alignment/$file -output fasta -codontable 2 > FASTA_Files/nuc_post-alignment/aligned_$file");
+##	}
+##
+###close genomes.genbank filehandle
+##$seqout->close();
 
 
 
@@ -417,33 +416,33 @@ $seqout->close();
 
 
 
-#sleep 15 seconds to allow files to be created and closed before starting the model testing
-print "brief pause \n";
-foreach (1..15) {
-	print ".";
-	sleep(1);
-	}
-print "\n";
+###sleep 15 seconds to allow files to be created and closed before starting the model testing
+##print "brief pause \n";
+##foreach (1..15) {
+##	print ".";
+##	sleep(1);
+##	}
+##print "\n";
+##
+###change directory to jmodeltest2
+##chdir "subs/jModelTest2";
 
-#change directory to jmodeltest2
-chdir "subs/jModelTest2";
-
-##HAVE TO CHANGE THESE TO GIVE JAVA MORE RAM
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ATP6.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ATP6_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ATP8.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ATP8_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_CYTB.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/CYTB_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_COX1.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/COX1_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_COX2.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/COX2_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_COX3.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/COX3_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND1.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND1_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND2.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND2_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND3.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND3_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND4.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND4_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND4L.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND4L_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND5.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND5_jmodeltest_results.txt");
-system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND6.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND6_jmodeltest_results.txt");
-#change working directory back to FGT folder
-chdir("../..");
+####HAVE TO CHANGE THESE TO GIVE JAVA MORE RAM
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ATP6.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ATP6_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ATP8.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ATP8_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_CYTB.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/CYTB_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_COX1.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/COX1_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_COX2.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/COX2_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_COX3.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/COX3_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND1.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND1_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND2.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND2_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND3.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND3_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND4.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND4_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND4L.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND4L_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND5.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND5_jmodeltest_results.txt");
+##system("java -jar jModelTest.jar -d ../../FASTA_Files/nuc_post-alignment/aligned_ND6.fas -g 4 -i -f -AIC -tr 3 > ../../Other_Data/jmodeltest_results/ND6_jmodeltest_results.txt");
+###change working directory back to FGT folder
+##chdir("../..");
 
 
 #Parsimony analysis
